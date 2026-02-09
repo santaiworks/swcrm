@@ -41,6 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # --- Python / Backend ---
+backend/uploads/
 __pycache__/
 *.py[cod]
 *$py.class
