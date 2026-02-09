@@ -83,6 +83,9 @@ verify_out.txt
 # Database
 *.sqlite3
 *.db 
+
+# Uploads
+backend/uploads/
 # VS Code
 .vscode/
 !.vscode/extensions.json

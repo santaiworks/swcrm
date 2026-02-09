@@ -2,33 +2,49 @@
 import DashboardClient, { PieItem, FunnelItem, TrendItem } from './dashboard-client'
 import { apiFetch } from '@/lib/api'
 
+interface Lead {
+  id: string
+  status: string
+  source?: string
+  estimated_revenue?: number
+  created_at?: string
+  updated_at?: string
+  closing_date?: string
+  [key: string]: any
+}
+
+interface MasterStatus {
+  name: string
+  color?: string
+}
+
 export default async function DashboardPage() {
   // Fetch all leads (which includes deals now)
-  const allLeads = await fetchJson('/leads')
-  const statuses = await fetchJson('/master-data/master_lead_status?query=')
-  const settings = await fetchJson('/settings')
-  const currency = settings?.currency || 'IDR'
+  const allLeads = await fetchJson<Lead[]>('/leads')
+  const statuses = await fetchJson<MasterStatus[]>('/master-data/master_lead_status?query=')
+  // const settings = await fetchJson('/settings')
+  // const currency = settings?.currency || 'IDR'
 
   // Define logic for separating Leads vs Deals
   const dealStatuses = ['Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
   const wonStatus = 'Closed Won'
 
-  const leadsOnly = allLeads.filter((l: any) => !dealStatuses.includes(l.status))
-  const dealsOnly = allLeads.filter((l: any) => dealStatuses.includes(l.status))
-  const wonDealsList = dealsOnly.filter((l: any) => l.status === wonStatus)
-  const ongoingDealsList = dealsOnly.filter((l: any) => ['Proposal', 'Negotiation'].includes(l.status))
+  const leadsOnly = allLeads.filter((l) => !dealStatuses.includes(l.status))
+  const dealsOnly = allLeads.filter((l) => dealStatuses.includes(l.status))
+  const wonDealsList = dealsOnly.filter((l) => l.status === wonStatus)
+  const ongoingDealsList = dealsOnly.filter((l) => ['Proposal', 'Negotiation'].includes(l.status))
 
   const totalLeads = leadsOnly.length
   const ongoingDeals = ongoingDealsList.length
   const wonDeals = wonDealsList.length
 
   // Calculate Avg Deal Value
-  const totalWonValue = wonDealsList.reduce((sum: number, d: any) => sum + (d.estimated_revenue || 0), 0)
+  const totalWonValue = wonDealsList.reduce((sum, d) => sum + (d.estimated_revenue || 0), 0)
   const avgDealValue = wonDeals > 0 ? totalWonValue / wonDeals : 0
 
   // Calculate Avg Lead Close Time (Qualified/Converted)
   // Proxy: created_at to updated_at for Closed/Qualified leads
-  const convertedLeads = allLeads.filter((l: any) => ['Qualified', ...dealStatuses].includes(l.status))
+  const convertedLeads = allLeads.filter((l) => ['Qualified', ...dealStatuses].includes(l.status))
   let totalLeadTime = 0
   let countLeadTime = 0
   for (const lead of convertedLeads) {
@@ -74,7 +90,7 @@ export default async function DashboardPage() {
   ]
 
   const leadsByStatus: PieItem[] = Array.isArray(statuses)
-    ? statuses.map((s: any) => ({
+    ? statuses.map((s) => ({
       name: s.name,
       value: statusCounts[s.name] || 0,
       color: s.color || colorForStatus(s.name),
@@ -108,17 +124,17 @@ export default async function DashboardPage() {
   )
 }
 
-async function fetchJson(endpoint: string) {
+async function fetchJson<T = any>(endpoint: string): Promise<T> {
   try {
     const res = await apiFetch(endpoint, { cache: 'no-store' })
-    if (!res.ok) return []
+    if (!res.ok) return [] as unknown as T
     return await res.json()
   } catch {
-    return []
+    return [] as unknown as T
   }
 }
 
-function countByStatus(items: any[]): Record<string, number> {
+function countByStatus(items: Lead[]): Record<string, number> {
   const map: Record<string, number> = {}
   for (const it of items || []) {
     const key = it?.status || 'Unknown'
