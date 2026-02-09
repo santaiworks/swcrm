@@ -19,24 +19,39 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
     const [error, setError] = useState<string | null>(null)
 
     // State for controlled comboboxes
-    const [salutation, setSalutation] = useState('')
-    const [industry, setIndustry] = useState('')
-    const [source, setSource] = useState('')
-    const [noEmployees, setNoEmployees] = useState('')
-    const [status, setStatus] = useState('New')
+    const [salutation, setSalutation] = useState<number | string>('')
+    const [industry, setIndustry] = useState<number | string>('')
+    const [source, setSource] = useState<number | string>('')
+    const [noEmployees, setNoEmployees] = useState<number | string>('')
+    const [status, setStatus] = useState<number | string>('')
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
         setIsLoading(true)
 
         const formData = new FormData(event.currentTarget)
-        const result = await createDeal(formData)
+        // Convert FormData to plain object for createDeal which expects any/object? 
+        // No, createDeal takes `data: any`. If it expects object, we should convert.
+        // Looking at actions.ts: `const payload: any = { ...data }`. It expects an object, not FormData.
+        // Wait, createLead uses FormData? createLead in leads/actions.ts: `export async function createLead(formData: FormData)`.
+        // createDeal in deals/actions.ts: `export async function createDeal(data: any)`.
+        // So I need to convert FormData to object here.
+        
+        const data: any = {}
+        formData.forEach((value, key) => {
+            data[key] = value
+        })
+        
+        // Add combobox values if not in formData (they should be via hidden inputs in MasterDataCombobox if name is passed)
+        // MasterDataCombobox has: `{name && <input type="hidden" name={name} value={value || ''} />}`
+        // So they are in FormData.
+        
+        const result = await createDeal(data)
 
         setIsLoading(false)
 
         if (result?.error) {
-            // Handle structured error from Zod
-            setError(result.error)
+            setError(typeof result.error === 'string' ? result.error : 'Failed to create deal')
         } else {
             onOpenChange(false)
         }
@@ -64,7 +79,7 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
                             <MasterDataCombobox
                                 table="master_salutations"
                                 value={salutation}
-                                onChange={setSalutation}
+                                onChange={(val) => setSalutation(val)}
                                 name="salutation"
                                 placeholder="Salutation"
                             />
@@ -136,7 +151,7 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
                             <MasterDataCombobox
                                 table="master_industries"
                                 value={industry}
-                                onChange={setIndustry}
+                                onChange={(val) => setIndustry(val)}
                                 name="industry"
                                 placeholder="Industry"
                             />
@@ -149,7 +164,7 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
                             <MasterDataCombobox
                                 table="master_employee_counts"
                                 value={noEmployees}
-                                onChange={setNoEmployees}
+                                onChange={(val) => setNoEmployees(val)}
                                 name="no_employees"
                                 placeholder="No. of employees"
                             />
@@ -159,7 +174,7 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
                             <MasterDataCombobox
                                 table="master_sources"
                                 value={source}
-                                onChange={setSource}
+                                onChange={(val) => setSource(val)}
                                 name="source"
                                 placeholder="Source"
                             />
@@ -169,21 +184,36 @@ export function CreateDealDialog({ open, onOpenChange }: CreateDealDialogProps) 
 
                     <div className="h-px bg-gray-100 my-1" />
 
-                    {/* Section 4: Status & Owner */}
+                    {/* Section 4: Opportunity Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                            <Label htmlFor="estimated_revenue" className="text-gray-500 font-normal text-xs">Perkiraan Omzet (IDR)</Label>
+                            <Input id="estimated_revenue" name="estimated_revenue" type="number" step="0.01" placeholder="0.00" className="bg-gray-50/50 border-gray-200 h-8 text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="probability" className="text-gray-500 font-normal text-xs">Probability (%)</Label>
+                            <Input id="probability" name="probability" type="number" min="0" max="100" placeholder="0" className="bg-gray-50/50 border-gray-200 h-8 text-sm" />
+                        </div>
+                        <div className="hidden md:block"></div>
+                    </div>
+
+                    <div className="h-px bg-gray-100 my-1" />
+
+                    {/* Section 5: Status & Owner */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="space-y-1">
                             <Label htmlFor="status" className="text-gray-500 font-normal text-xs">Status <span className="text-red-500">*</span></Label>
                             <MasterDataCombobox
                                 table="master_lead_status"
                                 value={status}
-                                onChange={setStatus}
+                                onChange={(val) => setStatus(val)}
                                 name="status"
                                 placeholder="Status"
                             />
                         </div>
                         <div className="space-y-1">
-                            <Label htmlFor="lead_owner" className="text-gray-500 font-normal text-xs">Lead owner</Label>
-                            <Select name="lead_owner" disabled>
+                            <Label htmlFor="lead_owner" className="text-gray-500 font-normal text-xs">Deal owner</Label>
+                            <Select name="lead_owner" disabled defaultValue="admin">
                                 <SelectTrigger className="bg-gray-50/50 border-gray-200 h-8 w-full text-sm">
                                     <SelectValue placeholder="Administrator" />
                                 </SelectTrigger>

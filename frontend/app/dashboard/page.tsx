@@ -4,8 +4,8 @@ import { apiFetch } from '@/lib/api'
 
 interface Lead {
   id: string
-  status: string
-  source?: string
+  status: number | string // Support ID (number) or legacy Name (string)
+  source?: number | string
   estimated_revenue?: number
   created_at?: string
   updated_at?: string
@@ -14,6 +14,7 @@ interface Lead {
 }
 
 interface MasterStatus {
+  id: number
   name: string
   color?: string
 }
@@ -22,17 +23,37 @@ export default async function DashboardPage() {
   // Fetch all leads (which includes deals now)
   const allLeads = await fetchJson<Lead[]>('/leads')
   const statuses = await fetchJson<MasterStatus[]>('/master-data/master_lead_status?query=')
-  // const settings = await fetchJson('/settings')
-  // const currency = settings?.currency || 'IDR'
+  const sources = await fetchJson<MasterStatus[]>('/master-data/master_sources?query=')
 
   // Define logic for separating Leads vs Deals
-  const dealStatuses = ['Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
-  const wonStatus = 'Closed Won'
+  const dealStatusNames = ['Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
+  const dealStatusIds = statuses.filter(s => dealStatusNames.includes(s.name)).map(s => s.id)
+  const wonStatus = statuses.find(s => s.name === 'Closed Won')
+  const wonStatusId = wonStatus?.id
+  const wonStatusName = 'Closed Won'
 
-  const leadsOnly = allLeads.filter((l) => !dealStatuses.includes(l.status))
-  const dealsOnly = allLeads.filter((l) => dealStatuses.includes(l.status))
-  const wonDealsList = dealsOnly.filter((l) => l.status === wonStatus)
-  const ongoingDealsList = dealsOnly.filter((l) => ['Proposal', 'Negotiation'].includes(l.status))
+  // Helper to check status (handle both ID and Name for backward compatibility)
+  const isStatusIn = (leadStatus: number | string, targetNames: string[], targetIds: number[]) => {
+      if (typeof leadStatus === 'number') return targetIds.includes(leadStatus)
+      // Check if it's a numeric string (e.g. "4") matching an ID
+      if (!isNaN(Number(leadStatus)) && targetIds.includes(Number(leadStatus))) return true
+      return targetNames.includes(leadStatus as string)
+  }
+
+  const isStatus = (leadStatus: number | string, targetName: string, targetId?: number) => {
+      if (typeof leadStatus === 'number') return leadStatus === targetId
+      if (!isNaN(Number(leadStatus)) && Number(leadStatus) === targetId) return true
+      return leadStatus === targetName
+  }
+
+  const leadsOnly = allLeads.filter((l) => !isStatusIn(l.status, dealStatusNames, dealStatusIds))
+  const dealsOnly = allLeads.filter((l) => isStatusIn(l.status, dealStatusNames, dealStatusIds))
+  const wonDealsList = dealsOnly.filter((l) => isStatus(l.status, wonStatusName, wonStatusId))
+  const ongoingDealsList = dealsOnly.filter((l) => {
+      const ongoingNames = ['Proposal', 'Negotiation']
+      const ongoingIds = statuses.filter(s => ongoingNames.includes(s.name)).map(s => s.id)
+      return isStatusIn(l.status, ongoingNames, ongoingIds)
+  })
 
   const totalLeads = leadsOnly.length
   const ongoingDeals = ongoingDealsList.length
@@ -43,8 +64,10 @@ export default async function DashboardPage() {
   const avgDealValue = wonDeals > 0 ? totalWonValue / wonDeals : 0
 
   // Calculate Avg Lead Close Time (Qualified/Converted)
-  // Proxy: created_at to updated_at for Closed/Qualified leads
-  const convertedLeads = allLeads.filter((l) => ['Qualified', ...dealStatuses].includes(l.status))
+  const qualifiedNames = ['Qualified', ...dealStatusNames]
+  const qualifiedIds = statuses.filter(s => qualifiedNames.includes(s.name)).map(s => s.id)
+  const convertedLeads = allLeads.filter((l) => isStatusIn(l.status, qualifiedNames, qualifiedIds))
+  
   let totalLeadTime = 0
   let countLeadTime = 0
   for (const lead of convertedLeads) {
@@ -78,9 +101,27 @@ export default async function DashboardPage() {
   const avgDealTimeMs = countDealTime > 0 ? totalDealTime / countDealTime : 0
   const avgDealCloseTime = avgDealTimeMs > 0 ? `${Math.round(avgDealTimeMs / (1000 * 60 * 60 * 24))} days` : 'N/A'
 
-
   // Funnel: New -> Qualified -> Proposal -> Negotiation -> Won
-  const statusCounts = countByStatus(allLeads)
+  // Map IDs to Names for counting
+  const statusIdToName = (id: number) => statuses.find(s => s.id === id)?.name || 'Unknown'
+  
+  function countByStatusNormalized(items: Lead[]): Record<string, number> {
+    const map: Record<string, number> = {}
+    for (const it of items || []) {
+      let key = 'Unknown'
+      if (typeof it.status === 'number') {
+          key = statusIdToName(it.status)
+      } else if (!isNaN(Number(it.status))) {
+          key = statusIdToName(Number(it.status))
+      } else {
+          key = it.status as string || 'Unknown'
+      }
+      map[key] = (map[key] || 0) + 1
+    }
+    return map
+  }
+
+  const statusCounts = countByStatusNormalized(allLeads)
   const funnel: FunnelItem[] = [
     { name: 'Leads', value: statusCounts['New'] || 0 },
     { name: 'Qualified', value: statusCounts['Qualified'] || 0 },
@@ -97,7 +138,12 @@ export default async function DashboardPage() {
     }))
     : []
 
-  const leadsBySource: PieItem[] = pieFromField(allLeads, 'source')
+  const leadsBySource: PieItem[] = pieFromFieldWithMap(allLeads, 'source', sources)
+
+  // ... (trend remains same, but countByDate logic needs checking if it uses status? No, it uses created_at)
+  
+  // ...
+
 
   const trend: TrendItem[] = lastNDays(7).map((d) => ({
     time: d.label,
@@ -134,14 +180,8 @@ async function fetchJson<T = unknown>(endpoint: string): Promise<T> {
   }
 }
 
-function countByStatus(items: Lead[]): Record<string, number> {
-  const map: Record<string, number> = {}
-  for (const it of items || []) {
-    const key = it?.status || 'Unknown'
-    map[key] = (map[key] || 0) + 1
-  }
-  return map
-}
+// Remove unused countByStatus
+// function countByStatus(items: Lead[]): Record<string, number> { ... }
 
 function colorForStatus(name: string): string {
   // Fallback colors if master data doesn't provide
@@ -156,10 +196,16 @@ function colorForStatus(name: string): string {
   }
 }
 
-function pieFromField(items: Lead[], field: string): PieItem[] {
+function pieFromFieldWithMap(items: Lead[], field: string, mapping: MasterStatus[]): PieItem[] {
   const map: Record<string, number> = {}
   for (const it of items || []) {
-    const key = (it?.[field] as string) || 'Unknown'
+    let key = 'Unknown'
+    const val = it?.[field]
+    if (typeof val === 'number') {
+        key = mapping.find(m => m.id === val)?.name || 'Unknown'
+    } else {
+        key = (val as string) || 'Unknown'
+    }
     map[key] = (map[key] || 0) + 1
   }
   const palette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']

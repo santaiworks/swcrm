@@ -31,8 +31,8 @@ import { searchMasterData, createMasterData } from '@/app/dashboard/leads/master
 
 interface MasterDataComboboxProps {
     table: 'master_industries' | 'master_sources' | 'master_salutations' | 'master_employee_counts' | 'master_lead_status'
-    value?: string
-    onChange: (value: string) => void
+    value?: number | string
+    onChange: (value: number, name?: string) => void
     name?: string
     placeholder?: string
     disabled?: boolean
@@ -56,19 +56,22 @@ export function MasterDataCombobox({
     const [createValue, setCreateValue] = React.useState('')
     const [isCreating, setIsCreating] = React.useState(false)
 
-    // Initial fetch or fetch on open? 
-    // Let's fetch on open to save resources, or fetch once mounted.
-    // Ideally use SWR or React Query, but for simplicity let's use useEffect
+    // Fetch data
     React.useEffect(() => {
-        if (open) {
-            setLoading(true)
-            searchMasterData(table, '')
-                .then(data => {
-                    setItems(data || [])
-                })
-                .finally(() => setLoading(false))
-        }
-    }, [open, table])
+        // Fetch on mount or when table changes to ensure we can resolve IDs to names
+        // But to optimize, we can fetch on open OR if we have a value that needs resolving.
+        // For simplicity and correctness in "Update" form where value exists: fetch on mount.
+        setLoading(true)
+        searchMasterData(table, '')
+            .then(data => {
+                setItems(data || [])
+            })
+            .finally(() => setLoading(false))
+    }, [table])
+
+    // Find selected item name
+    const selectedItem = items.find(item => item.id === value || item.name === value)
+    const displayValue = selectedItem ? selectedItem.name : (typeof value === 'string' ? value : '')
 
     // Handle creation
     const handleCreateClick = () => {
@@ -87,7 +90,7 @@ export function MasterDataCombobox({
         if (response.data) {
             const newItem = response.data
             setItems(prev => [...prev, newItem])
-            onChange(newItem.name)
+            onChange(newItem.id, newItem.name)
             setShowCreateDialog(false)
             setQuery('')
         } else {
@@ -105,11 +108,7 @@ export function MasterDataCombobox({
                     className="w-full justify-between bg-gray-50/50 border-gray-200 h-8 text-sm font-normal text-muted-foreground hover:bg-gray-50/50"
                     disabled={disabled}
                 >
-                    {value ? (
-                        <span className="text-foreground">{value}</span>
-                    ) : (
-                        placeholder
-                    )}
+                    {displayValue || placeholder}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -148,15 +147,15 @@ export function MasterDataCombobox({
                                 <CommandItem
                                     key={item.id}
                                     value={item.name}
-                                    onSelect={(currentValue) => {
-                                        onChange(currentValue === value ? "" : currentValue)
+                                    onSelect={() => {
+                                        onChange(item.id, item.name)
                                         setOpen(false)
                                     }}
                                 >
                                     <Check
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            value === item.name ? "opacity-100" : "opacity-0"
+                                            value === item.id || value === item.name ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     {item.name}
@@ -169,7 +168,8 @@ export function MasterDataCombobox({
                                 size="sm"
                                 className="w-full justify-start h-8 text-muted-foreground font-normal"
                                 onClick={() => {
-                                    onChange("")
+                                    // @ts-ignore
+                                    onChange(null, "")
                                     setOpen(false)
                                 }}
                             >
@@ -180,7 +180,7 @@ export function MasterDataCombobox({
                     </CommandList>
                 </Command>
             </PopoverContent>
-            {name && <input type="hidden" name={name} value={value} />}
+            {name && <input type="hidden" name={name} value={value || ''} />}
 
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent className="sm:max-w-[425px]">

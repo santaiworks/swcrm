@@ -7,16 +7,16 @@ class LeadCreate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[str] = None
     mobile_no: Optional[str] = None
-    status: str = 'New'
+    status: Optional[int] = None # Changed to int (ID)
     # ... Add other fields as needed
-    salutation: Optional[str] = None
+    salutation: Optional[int] = None
     job_title: Optional[str] = None
     department: Optional[str] = None
     organization: Optional[str] = None
     website: Optional[str] = None
-    industry: Optional[str] = None
-    no_employees: Optional[str] = None
-    source: Optional[str] = None
+    industry: Optional[int] = None
+    no_employees: Optional[int] = None
+    source: Optional[int] = None
     gender: Optional[str] = None
     
     # Opportunity Fields

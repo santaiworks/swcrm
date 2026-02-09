@@ -13,7 +13,7 @@ class Lead(Base):
     owner_id = Column(UUID(as_uuid=True), nullable=True)
 
     # Person Details
-    salutation = Column(String, nullable=True)
+    salutation = Column(Integer, nullable=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=True)
     job_title = Column(String, nullable=True)
@@ -27,12 +27,12 @@ class Lead(Base):
     # Company Details
     organization = Column(String, nullable=True)
     website = Column(String, nullable=True)
-    industry = Column(String, nullable=True)
-    no_employees = Column(String, nullable=True)
-    source = Column(String, nullable=True)
+    industry = Column(Integer, nullable=True)
+    no_employees = Column(Integer, nullable=True)
+    source = Column(Integer, nullable=True)
 
     # Status
-    status = Column(String, nullable=False, default='New')
+    status = Column(Integer, nullable=True) # Changed from String to Integer (ID)
 
     # Opportunity Fields
     estimated_revenue = Column(Float, nullable=True) # Perkiraan Omzet

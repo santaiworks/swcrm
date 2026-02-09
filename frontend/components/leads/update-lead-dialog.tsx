@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select'
+import { MasterDataCombobox } from '@/components/leads/master-data-combobox'
 import { updateLead } from '@/app/dashboard/leads/actions'
 import { useRouter } from 'next/navigation'
 
@@ -68,6 +69,10 @@ export function UpdateLeadDialog({ lead, open, onOpenChange }: UpdateLeadDialogP
         setFormData((prev: any) => ({ ...prev, [id]: value }))
     }
 
+    const handleComboboxChange = (id: string, value: number | string) => {
+        setFormData((prev: any) => ({ ...prev, [id]: value }))
+    }
+
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault()
         setIsLoading(true)
@@ -99,18 +104,13 @@ export function UpdateLeadDialog({ lead, open, onOpenChange }: UpdateLeadDialogP
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="salutation">Salutation</Label>
-                            <Select value={formData.salutation} onValueChange={(v) => handleSelectChange('salutation', v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Mr.">Mr.</SelectItem>
-                                    <SelectItem value="Mrs.">Mrs.</SelectItem>
-                                    <SelectItem value="Ms.">Ms.</SelectItem>
-                                    <SelectItem value="Dr.">Dr.</SelectItem>
-                                    <SelectItem value="Prof.">Prof.</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <MasterDataCombobox
+                                table="master_salutations"
+                                value={formData.salutation}
+                                onChange={(val) => handleComboboxChange('salutation', val)}
+                                name="salutation"
+                                placeholder="Salutation"
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="first_name">First Name</Label>
@@ -131,6 +131,58 @@ export function UpdateLeadDialog({ lead, open, onOpenChange }: UpdateLeadDialogP
                         <div className="space-y-2">
                             <Label htmlFor="job_title">Job Title</Label>
                             <Input id="job_title" value={formData.job_title} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="department">Department</Label>
+                            <Input id="department" value={formData.department} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="organization">Organization</Label>
+                            <Input id="organization" value={formData.organization} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="website">Website</Label>
+                            <Input id="website" value={formData.website} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="industry">Industry</Label>
+                            <MasterDataCombobox
+                                table="master_industries"
+                                value={formData.industry}
+                                onChange={(val) => handleComboboxChange('industry', val)}
+                                name="industry"
+                                placeholder="Industry"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="no_employees">No. of Employees</Label>
+                            <MasterDataCombobox
+                                table="master_employee_counts"
+                                value={formData.no_employees}
+                                onChange={(val) => handleComboboxChange('no_employees', val)}
+                                name="no_employees"
+                                placeholder="No. of Employees"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="source">Source</Label>
+                            <MasterDataCombobox
+                                table="master_sources"
+                                value={formData.source}
+                                onChange={(val) => handleComboboxChange('source', val)}
+                                name="source"
+                                placeholder="Source"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="status">Status</Label>
+                            <MasterDataCombobox
+                                table="master_lead_status"
+                                value={formData.status}
+                                onChange={(val) => handleComboboxChange('status', val)}
+                                name="status"
+                                placeholder="Status"
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="estimated_revenue">Perkiraan Omzet (IDR)</Label>

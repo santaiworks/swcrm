@@ -20,11 +20,11 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
     const [error, setError] = useState<string | null>(null)
 
     // State for controlled comboboxes
-    const [salutation, setSalutation] = useState('')
-    const [industry, setIndustry] = useState('')
-    const [source, setSource] = useState('')
-    const [noEmployees, setNoEmployees] = useState('')
-    const [status, setStatus] = useState('New')
+    const [salutation, setSalutation] = useState<number | string>('')
+    const [industry, setIndustry] = useState<number | string>('')
+    const [source, setSource] = useState<number | string>('')
+    const [noEmployees, setNoEmployees] = useState<number | string>('')
+    const [status, setStatus] = useState<number | string>('') // Remove default 'New' to force selection of ID
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -77,7 +77,7 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
                             <MasterDataCombobox
                                 table="master_salutations"
                                 value={salutation}
-                                onChange={setSalutation}
+                                onChange={(val) => setSalutation(val)}
                                 name="salutation"
                                 placeholder="Salutation"
                             />
@@ -149,7 +149,7 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
                             <MasterDataCombobox
                                 table="master_industries"
                                 value={industry}
-                                onChange={setIndustry}
+                                onChange={(val) => setIndustry(val)}
                                 name="industry"
                                 placeholder="Industry"
                             />
@@ -162,7 +162,7 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
                             <MasterDataCombobox
                                 table="master_employee_counts"
                                 value={noEmployees}
-                                onChange={setNoEmployees}
+                                onChange={(val) => setNoEmployees(val)}
                                 name="no_employees"
                                 placeholder="No. of employees"
                             />
@@ -172,7 +172,7 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
                             <MasterDataCombobox
                                 table="master_sources"
                                 value={source}
-                                onChange={setSource}
+                                onChange={(val) => setSource(val)}
                                 name="source"
                                 placeholder="Source"
                             />
@@ -204,7 +204,7 @@ export function CreateLeadDialog({ open, onOpenChange, title = "Lead" }: CreateL
                             <MasterDataCombobox
                                 table="master_lead_status"
                                 value={status}
-                                onChange={setStatus}
+                                onChange={(val) => setStatus(val)}
                                 name="status"
                                 placeholder="Status"
                             />
