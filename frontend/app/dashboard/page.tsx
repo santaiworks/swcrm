@@ -10,7 +10,7 @@ interface Lead {
   created_at?: string
   updated_at?: string
   closing_date?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 interface MasterStatus {
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
   )
 }
 
-async function fetchJson<T = any>(endpoint: string): Promise<T> {
+async function fetchJson<T = unknown>(endpoint: string): Promise<T> {
   try {
     const res = await apiFetch(endpoint, { cache: 'no-store' })
     if (!res.ok) return [] as unknown as T
@@ -156,7 +156,7 @@ function colorForStatus(name: string): string {
   }
 }
 
-function pieFromField(items: any[], field: string): PieItem[] {
+function pieFromField(items: Lead[], field: string): PieItem[] {
   const map: Record<string, number> = {}
   for (const it of items || []) {
     const key = (it?.[field] as string) || 'Unknown'
@@ -172,7 +172,7 @@ function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-function countByDate(items: any[], day: Date): number {
+function countByDate(items: Lead[], day: Date): number {
   const target = startOfDay(day).getTime()
   let count = 0
   for (const it of items || []) {
