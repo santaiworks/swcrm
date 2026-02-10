@@ -4,7 +4,7 @@ import { searchMasterData } from '../../dashboard/leads/master-actions'
 
 async function getLeads() {
   try {
-    const res = await apiFetch('/leads')
+    const res = await apiFetch('/leads?status=Lead')
     if (!res.ok) return []
     const leads = await res.json()
     console.log('DEBUG: First lead from API:', leads[0])

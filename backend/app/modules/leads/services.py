@@ -34,16 +34,22 @@ class LeadService:
     @staticmethod
     def get_leads(db: Session, status: str = None):
         deal_status_names = ["Proposal", "Negotiation", "Closed Won", "Closed Lost"]
+        opportunity_status_names = ["Qualified"]
+        lead_status_names = ["New", "Attempted to Contact", "Contacted", "Unqualified"]
         
         query = db.query(Lead)
         
         if status:
             if status == "Opportunity":
-                 # Opportunity logic if needed
-                 pass
+                 status_ids = db.query(MasterLeadStatus.id).filter(MasterLeadStatus.name.in_(opportunity_status_names)).all()
+                 status_ids = [s[0] for s in status_ids]
+                 query = query.filter(Lead.status.in_(status_ids))
             elif status == "Deal": 
-                 # Fetch IDs for deal statuses
                  status_ids = db.query(MasterLeadStatus.id).filter(MasterLeadStatus.name.in_(deal_status_names)).all()
+                 status_ids = [s[0] for s in status_ids]
+                 query = query.filter(Lead.status.in_(status_ids))
+            elif status == "Lead":
+                 status_ids = db.query(MasterLeadStatus.id).filter(MasterLeadStatus.name.in_(lead_status_names)).all()
                  status_ids = [s[0] for s in status_ids]
                  query = query.filter(Lead.status.in_(status_ids))
             else:
@@ -55,9 +61,7 @@ class LeadService:
                      status_obj = db.query(MasterLeadStatus).filter(MasterLeadStatus.name == status).first()
                      if status_obj:
                          query = query.filter(Lead.status == status_obj.id)
-        else:
-            pass
-
+        
         return query.all()
 
 

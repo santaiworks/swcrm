@@ -32,6 +32,7 @@ class LeadCreate(BaseModel):
 class LeadResponse(LeadCreate):
     id: uuid.UUID
     created_at: Any
+    updated_at: Any
     status_label: Optional[str] = None
     salutation_label: Optional[str] = None
     industry_label: Optional[str] = None

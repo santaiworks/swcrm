@@ -16,6 +16,7 @@ export type TrendItem = { time: string; leads: number; deals: number; won: numbe
 export interface DashboardProps {
   metrics: {
     totalLeads: number
+    totalOpportunities: number
     ongoingDeals: number
     wonDeals: number
     avgDealValue?: number | null
@@ -78,6 +79,7 @@ export default function DashboardClient({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Total leads" value={String(metrics.totalLeads)} />
+        <KPICard title="Total opportunities" value={String(metrics.totalOpportunities)} />
         <KPICard title="Ongoing deals" value={String(metrics.ongoingDeals)} />
         <KPICard title="Won deals" value={String(metrics.wonDeals)} />
         <KPICard title="Avg. deal value" value={formatCurrency(metrics.avgDealValue)} />

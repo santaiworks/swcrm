@@ -16,7 +16,7 @@ interface Lead {
 }
 
 interface MasterStatus {
-  id: number
+  id: string
   name: string
   color?: string
 }
@@ -27,39 +27,30 @@ export default async function DashboardPage() {
   const statuses = await fetchJson<MasterStatus[]>('/master-data/master_lead_status?query=')
   const sources = await fetchJson<MasterStatus[]>('/master-data/master_sources?query=')
 
-  // Define logic for separating Leads vs Deals
+  // Define logic for separating Leads vs Opportunities vs Deals
   const dealStatusNames = ['Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
-  const dealStatusIds = statuses.filter(s => dealStatusNames.includes(s.name)).map(s => s.id)
-  const wonStatus = statuses.find(s => s.name === 'Closed Won')
-  const wonStatusId = wonStatus?.id
-  const wonStatusName = 'Closed Won'
+  const opportunityStatusNames = ['Qualified']
+  const leadStatusNames = ['New', 'Attempted to Contact', 'Contacted', 'Unqualified']
 
-  // Helper to check status (handle both ID and Name for backward compatibility)
-  const isStatusIn = (leadStatus: number | string, targetNames: string[], targetIds: number[]) => {
-    if (typeof leadStatus === 'number') return targetIds.includes(leadStatus)
-    // Check if it's a numeric string (e.g. "4") matching an ID
-    if (!isNaN(Number(leadStatus)) && targetIds.includes(Number(leadStatus))) return true
-    return targetNames.includes(leadStatus as string)
+  const getStatusName = (l: Lead): string => {
+    if (l.status_label) return l.status_label
+    if (typeof l.status === 'number') return statuses.find(s => s.id === l.status)?.name || 'Unknown'
+    if (typeof l.status === 'string' && !isNaN(Number(l.status))) return statuses.find(s => s.id === Number(l.status))?.name || 'Unknown'
+    return (l.status as string) || 'Unknown'
   }
 
-  const isStatus = (leadStatus: number | string, targetName: string, targetId?: number) => {
-    if (typeof leadStatus === 'number') return leadStatus === targetId
-    if (!isNaN(Number(leadStatus)) && Number(leadStatus) === targetId) return true
-    return leadStatus === targetName
-  }
+  // Debug data structure
+  console.log('DEBUG: Dashboard Sample Lead:', allLeads[0])
 
-  const leadsOnly = allLeads.filter((l) => !isStatusIn(l.status, dealStatusNames, dealStatusIds))
-  const dealsOnly = allLeads.filter((l) => isStatusIn(l.status, dealStatusNames, dealStatusIds))
-  const wonDealsList = dealsOnly.filter((l) => isStatus(l.status, wonStatusName, wonStatusId))
-  const ongoingDealsList = dealsOnly.filter((l) => {
-    const ongoingNames = ['Proposal', 'Negotiation']
-    const ongoingIds = statuses.filter(s => ongoingNames.includes(s.name)).map(s => s.id)
-    return isStatusIn(l.status, ongoingNames, ongoingIds)
-  })
+  const leadsOnly = allLeads.filter((l) => leadStatusNames.includes(getStatusName(l)))
+  const opportunitiesOnly = allLeads.filter((l) => opportunityStatusNames.includes(getStatusName(l)))
+  const dealsOnly = allLeads.filter((l) => dealStatusNames.includes(getStatusName(l)))
 
   const totalLeads = leadsOnly.length
-  const ongoingDeals = ongoingDealsList.length
-  const wonDeals = wonDealsList.length
+  const totalOpportunities = opportunitiesOnly.length
+  const ongoingDeals = dealsOnly.filter((l) => ['Proposal', 'Negotiation'].includes(getStatusName(l))).length
+  const wonDeals = dealsOnly.filter((l) => getStatusName(l) === 'Closed Won').length
+  const wonDealsList = dealsOnly.filter((l) => getStatusName(l) === 'Closed Won')
 
   // Calculate Avg Deal Value
   const totalWonValue = wonDealsList.reduce((sum, d) => sum + (d.estimated_revenue || 0), 0)
@@ -67,8 +58,7 @@ export default async function DashboardPage() {
 
   // Calculate Avg Lead Close Time (Qualified/Converted)
   const qualifiedNames = ['Qualified', ...dealStatusNames]
-  const qualifiedIds = statuses.filter(s => qualifiedNames.includes(s.name)).map(s => s.id)
-  const convertedLeads = allLeads.filter((l) => isStatusIn(l.status, qualifiedNames, qualifiedIds))
+  const convertedLeads = allLeads.filter((l) => qualifiedNames.includes(getStatusName(l)))
 
   let totalLeadTime = 0
   let countLeadTime = 0
@@ -83,7 +73,10 @@ export default async function DashboardPage() {
     }
   }
   const avgLeadTimeMs = countLeadTime > 0 ? totalLeadTime / countLeadTime : 0
-  const avgLeadCloseTime = avgLeadTimeMs > 0 ? `${Math.round(avgLeadTimeMs / (1000 * 60 * 60 * 24))} days` : 'N/A'
+  const avgLeadDays = Math.round(avgLeadTimeMs / (1000 * 60 * 60 * 24))
+  const avgLeadCloseTime = countLeadTime > 0
+    ? (avgLeadDays > 0 ? `${avgLeadDays} days` : '< 1 day')
+    : 'N/A'
 
   // Calculate Avg Deal Close Time (won deals)
   let totalDealTime = 0
@@ -101,11 +94,13 @@ export default async function DashboardPage() {
     }
   }
   const avgDealTimeMs = countDealTime > 0 ? totalDealTime / countDealTime : 0
-  const avgDealCloseTime = avgDealTimeMs > 0 ? `${Math.round(avgDealTimeMs / (1000 * 60 * 60 * 24))} days` : 'N/A'
+  const avgDealDays = Math.round(avgDealTimeMs / (1000 * 60 * 60 * 24))
+  const avgDealCloseTime = countDealTime > 0
+    ? (avgDealDays > 0 ? `${avgDealDays} days` : '< 1 day')
+    : 'N/A'
 
-  // Funnel: New -> Qualified -> Proposal -> Negotiation -> Won
   // Map IDs to Names for counting
-  const statusIdToName = (id: number) => statuses.find(s => s.id === id)?.name || 'Unknown'
+  const statusIdToName = (id: string | number) => statuses.find(s => s.id === String(id))?.name || 'Unknown'
 
   function countByStatusNormalized(items: Lead[]): Record<string, number> {
     const map: Record<string, number> = {}
@@ -126,9 +121,14 @@ export default async function DashboardPage() {
   }
 
   const statusCounts = countByStatusNormalized(allLeads)
+
+  // Calculate grouped counts for funnel
+  const funnelLeadsData = leadsOnly.length
+  const funnelOppData = opportunitiesOnly.length
+
   const funnel: FunnelItem[] = [
-    { name: 'Leads', value: statusCounts['New'] || 0 },
-    { name: 'Qualified', value: statusCounts['Qualified'] || 0 },
+    { name: 'Leads', value: funnelLeadsData },
+    { name: 'Qualified', value: funnelOppData },
     { name: 'Proposal', value: statusCounts['Proposal'] || 0 },
     { name: 'Negotiation', value: statusCounts['Negotiation'] || 0 },
     { name: 'Won', value: statusCounts['Closed Won'] || 0 },
@@ -160,6 +160,7 @@ export default async function DashboardPage() {
     <DashboardClient
       metrics={{
         totalLeads,
+        totalOpportunities,
         ongoingDeals,
         wonDeals,
         avgDealValue,
@@ -208,9 +209,9 @@ function pieFromFieldWithMap(items: Lead[], field: string, mapping: MasterStatus
     const val = it?.[field]
 
     if (it?.[labelKey]) {
-      key = it[labelKey] as string
-    } else if (typeof val === 'number') {
-      key = mapping.find(m => m.id === val)?.name || 'Unknown'
+      key = it[labelKey] as unknown as string
+    } else if (val !== undefined && val !== null) {
+      key = mapping.find(m => String(m.id) === String(val))?.name || 'Unknown'
     } else {
       key = (val as string) || 'Unknown'
     }
