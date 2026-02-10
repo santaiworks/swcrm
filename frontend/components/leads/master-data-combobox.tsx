@@ -31,8 +31,8 @@ import { searchMasterData, createMasterData } from '@/app/dashboard/leads/master
 
 interface MasterDataComboboxProps {
     table: 'master_industries' | 'master_sources' | 'master_salutations' | 'master_employee_counts' | 'master_lead_status'
-    value?: number | string
-    onChange: (value: number, name?: string) => void
+    value?: string | number
+    onChange: (value: string | number, name?: string) => void
     name?: string
     placeholder?: string
     disabled?: boolean
@@ -48,7 +48,7 @@ export function MasterDataCombobox({
 }: MasterDataComboboxProps) {
     const [open, setOpen] = React.useState(false)
     const [query, setQuery] = React.useState('')
-    const [items, setItems] = React.useState<{ id: number, name: string }[]>([])
+    const [items, setItems] = React.useState<{ id: string | number, name: string }[]>([])
     const [loading, setLoading] = React.useState(false)
 
     // Dialog state
@@ -70,7 +70,7 @@ export function MasterDataCombobox({
     }, [table])
 
     // Find selected item name
-    const selectedItem = items.find(item => item.id === value || item.name === value)
+    const selectedItem = items.find(item => item.id.toString() === value?.toString() || item.name === value)
     const displayValue = selectedItem ? selectedItem.name : (typeof value === 'string' ? value : '')
 
     // Handle creation
@@ -99,7 +99,7 @@ export function MasterDataCombobox({
     }
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
             <PopoverTrigger asChild>
                 <Button
                     variant="outline"
@@ -108,7 +108,9 @@ export function MasterDataCombobox({
                     className="w-full justify-between bg-gray-50/50 border-gray-200 h-8 text-sm font-normal text-muted-foreground hover:bg-gray-50/50"
                     disabled={disabled}
                 >
-                    {displayValue || placeholder}
+                    <span className={cn("truncate", displayValue ? "text-foreground" : "text-muted-foreground")}>
+                        {displayValue || placeholder}
+                    </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -146,16 +148,32 @@ export function MasterDataCombobox({
                             {items.map((item) => (
                                 <CommandItem
                                     key={item.id}
-                                    value={item.name}
+                                    value={item.id.toString()}
                                     onSelect={() => {
+                                        console.log('Selected via onSelect:', item.id, item.name);
                                         onChange(item.id, item.name)
                                         setOpen(false)
                                     }}
+                                    onPointerDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('Selected via onPointerDown:', item.id, item.name);
+                                        onChange(item.id, item.name)
+                                        setOpen(false)
+                                    }}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('Selected via onMouseDown:', item.id, item.name);
+                                        onChange(item.id, item.name)
+                                        setOpen(false)
+                                    }}
+                                    style={{ pointerEvents: 'auto' }}
                                 >
                                     <Check
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            value === item.id || value === item.name ? "opacity-100" : "opacity-0"
+                                            value?.toString() === item.id.toString() ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     {item.name}

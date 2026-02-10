@@ -23,6 +23,7 @@ export type Lead = {
     last_name: string
     email: string
     status: string
+    status_label?: string
     organization: string
 }
 
@@ -50,15 +51,15 @@ export const columns: ColumnDef<Lead>[] = [
         header: ({ column }) => <SortableHeader column={column}>Email</SortableHeader>,
     },
     {
-        accessorKey: "status",
+        accessorKey: "status_label",
         header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,
         cell: ({ row }) => {
-            const status = row.getValue("status") as string
+            const status = row.getValue("status_label") as string
             const dealStatuses = ['Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
             const isDeal = dealStatuses.includes(status)
             return (
                 <Badge variant={isDeal ? 'outline' : 'secondary'} className={isDeal ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ''}>
-                    {status}
+                    {status || row.original.status}
                 </Badge>
             )
         },

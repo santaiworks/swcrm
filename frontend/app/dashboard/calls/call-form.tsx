@@ -21,7 +21,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { useState } from "react"
- 
+
 import { toast } from "sonner"
 
 interface CallFormProps {
@@ -42,7 +42,6 @@ export function CallForm({ open, onOpenChange, initialData, onSuccess, entityTyp
     const [fromContact, setFromContact] = useState(initialData?.from_contact || "")
     const [status, setStatus] = useState(initialData?.status || "")
     const [durationSeconds, setDurationSeconds] = useState(initialData?.duration_seconds ?? 0)
-    const [receivedBy, setReceivedBy] = useState(initialData?.received_by || "")
     const [notes, setNotes] = useState(initialData?.notes || "")
     const [entityType, setEntityType] = useState(propEntityType || initialData?.entity_type || "LEAD")
     // Entity ID handling is complex without a search. For now, simple text or hidden if updated.
@@ -58,7 +57,6 @@ export function CallForm({ open, onOpenChange, initialData, onSuccess, entityTyp
                 from_contact: fromContact,
                 status: status || "Initiated",
                 duration_seconds: Number(durationSeconds) || 0,
-                received_by: receivedBy,
                 notes,
                 entity_type: entityType,
                 entity_id: entityId
@@ -108,9 +106,9 @@ export function CallForm({ open, onOpenChange, initialData, onSuccess, entityTyp
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Type *</Label>
+                            <Label className="text-gray-500 font-medium">Type *</Label>
                             <Select value={type} onValueChange={setType}>
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-gray-50/50 border-none">
                                     <SelectValue placeholder="Type" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -120,29 +118,31 @@ export function CallForm({ open, onOpenChange, initialData, onSuccess, entityTyp
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>To *</Label>
+                            <Label className="text-gray-500 font-medium">To *</Label>
                             <Input
                                 placeholder="To"
                                 value={toContact}
                                 onChange={(e) => setToContact(e.target.value)}
+                                className="bg-gray-50/50 border-none"
                                 required
                             />
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>From *</Label>
+                            <Label className="text-gray-500 font-medium">From *</Label>
                             <Input
                                 placeholder="From"
                                 value={fromContact}
                                 onChange={(e) => setFromContact(e.target.value)}
+                                className="bg-gray-50/50 border-none"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Status *</Label>
+                            <Label className="text-gray-500 font-medium">Status *</Label>
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-gray-50/50 border-none">
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -159,39 +159,30 @@ export function CallForm({ open, onOpenChange, initialData, onSuccess, entityTyp
                             </Select>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                            <Label>Duration</Label>
+                            <Label className="text-gray-500 font-medium">Duration</Label>
                             <Input
                                 type="number"
                                 placeholder="0"
                                 value={durationSeconds}
                                 onChange={(e) => setDurationSeconds(Number(e.target.value))}
+                                className="bg-gray-50/50 border-none w-[120px]"
                             />
-                            <p className="text-xs text-gray-500">Call duration in seconds</p>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Call received by</Label>
-                            <Input
-                                placeholder="Call received by"
-                                value={receivedBy}
-                                onChange={(e) => setReceivedBy(e.target.value)}
-                            />
+                            <p className="text-[10px] text-gray-400">Call duration in seconds</p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="notes" className="text-right">
-                            Notes
-                        </Label>
+                    <div className="space-y-2">
                         <Textarea
                             id="notes"
+                            placeholder="Add notes..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            className="col-span-3"
+                            className="bg-gray-50/50 border-none min-h-[100px] resize-none"
                         />
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} className="bg-black text-white hover:bg-gray-800 rounded-xl px-6">
                             {loading ? "Saving..." : "Save changes"}
                         </Button>
                     </DialogFooter>

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from .models import MasterIndustry, MasterSource, MasterSalutation, MasterEmployeeCount, MasterLeadStatus
+from .models import MasterIndustry, MasterSource, MasterSalutation, MasterEmployeeCount, MasterLeadStatus, MasterTaskStatus, MasterTaskPriority
 from .schemas import MasterDataCreate
 
 class MasterDataService:
@@ -15,6 +15,10 @@ class MasterDataService:
             return MasterEmployeeCount
         if table_name == 'master_lead_status':
             return MasterLeadStatus
+        if table_name == 'master_task_status':
+            return MasterTaskStatus
+        if table_name == 'master_task_priority':
+            return MasterTaskPriority
         return None
 
     @staticmethod

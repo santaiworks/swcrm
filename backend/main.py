@@ -40,6 +40,8 @@ def init_db():
             conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS to_contact TEXT;"))
             conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS from_contact TEXT;"))
             conn.execute(text("ALTER TABLE calls ADD COLUMN IF NOT EXISTS received_by TEXT;"))
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS status_id INTEGER;"))
+            conn.execute(text("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority_id INTEGER;"))
     except Exception:
         pass
 
@@ -65,7 +67,6 @@ app.include_router(employees_router.router, prefix="/employees", tags=["Employee
 app.include_router(tasks_router.router, prefix="/tasks", tags=["Tasks"])
 app.include_router(calls_router.router, prefix="/calls", tags=["Calls"])
 app.include_router(attachments_router.router, prefix="/attachments", tags=["Attachments"])
-app.include_router(emails_router.router, prefix="/emails", tags=["Emails"])
 app.include_router(emails_router.router, prefix="/emails", tags=["Emails"])
 app.include_router(contacts_router.router, prefix="/contacts", tags=["Contacts"])
 app.include_router(settings_router.router, prefix="/settings", tags=["Settings"])

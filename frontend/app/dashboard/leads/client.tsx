@@ -32,7 +32,7 @@ export default function LeadsClient({
 
     const filterableColumns = [
         {
-            id: "status",
+            id: "status_label",
             title: "Status",
             options: statusOptions
         }

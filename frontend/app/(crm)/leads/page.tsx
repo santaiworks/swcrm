@@ -6,7 +6,9 @@ async function getLeads() {
   try {
     const res = await apiFetch('/leads')
     if (!res.ok) return []
-    return await res.json()
+    const leads = await res.json()
+    console.log('DEBUG: First lead from API:', leads[0])
+    return leads
   } catch (error) {
     console.error('Failed to fetch leads:', error)
     return []

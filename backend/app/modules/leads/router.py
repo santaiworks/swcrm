@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from .schemas import LeadCreate
+from .schemas import LeadCreate, LeadResponse
 from .services import LeadService
 import uuid
 
@@ -14,23 +14,23 @@ def create_lead(lead: LeadCreate, db: Session = Depends(get_db)):
     db_lead = LeadService.create_lead(db, lead)
     return {"success": True, "id": str(db_lead.id)}
 
-@router.get("")
+@router.get("", response_model=List[LeadResponse])
 def read_leads(status: Optional[str] = Query(None), db: Session = Depends(get_db)):
     return LeadService.get_leads(db, status=status)
 
 
-@router.get("/deals")
+@router.get("/deals", response_model=List[LeadResponse])
 def read_deal_leads(db: Session = Depends(get_db)):
     return LeadService.get_deals_leads(db)
 
-@router.get("/{lead_id}")
+@router.get("/{lead_id}", response_model=LeadResponse)
 def read_lead(lead_id: str, db: Session = Depends(get_db)):
     lead = LeadService.get_lead(db, uuid.UUID(lead_id))
     if not lead:
         return {"error": "Lead not found"}
     return lead
 
-@router.patch("/{lead_id}")
+@router.patch("/{lead_id}", response_model=LeadResponse)
 def update_lead(lead_id: str, lead_data: dict, db: Session = Depends(get_db)):
     updated_lead = LeadService.update_lead(db, uuid.UUID(lead_id), lead_data)
     if not updated_lead:

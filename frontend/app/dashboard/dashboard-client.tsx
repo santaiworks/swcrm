@@ -81,8 +81,8 @@ export default function DashboardClient({
         <KPICard title="Ongoing deals" value={String(metrics.ongoingDeals)} />
         <KPICard title="Won deals" value={String(metrics.wonDeals)} />
         <KPICard title="Avg. deal value" value={formatCurrency(metrics.avgDealValue)} />
-        <KPICard title="Avg. time to close a lead" value={metrics.avgLeadCloseTime || 'N/A'} />
-        <KPICard title="Avg. time to close a deal" value={metrics.avgDealCloseTime || 'N/A'} />
+        <KPICard title="Avg. time to close a lead" value={metrics.avgLeadCloseTime || '0'} />
+        <KPICard title="Avg. time to close a deal" value={metrics.avgDealCloseTime || '0'} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

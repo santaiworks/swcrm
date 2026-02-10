@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MoreHorizontal, ArrowRightLeft, Plus, Mail, Link as LinkIcon, Paperclip, Trash2, Calendar, MessageSquare, Phone, CheckSquare, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,7 @@ import { TasksTab } from '@/components/common/tasks-tab'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CallsTab } from '@/components/common/calls-tab'
 import { MasterDataCombobox } from '@/components/leads/master-data-combobox'
+import { DataTab } from '@/components/common/data-tab'
 
 interface LeadDetailClientProps {
     lead: any
@@ -30,7 +31,14 @@ interface LeadDetailClientProps {
 export default function LeadDetailClient({ lead, activities }: LeadDetailClientProps) {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isConvertOpen, setIsConvertOpen] = useState(false)
+    const [mounted, setMounted] = useState(false)
     const router = useRouter()
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) return null
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this lead? This action cannot be undone.')) return
@@ -191,10 +199,12 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
     const tabs = [
         { value: 'activity', label: 'Activity', icon: <Plus className="w-4 h-4" />, content: <ActivityTab /> },
         { value: 'emails', label: 'Emails', icon: <Mail className="w-4 h-4" />, content: <EmailsTab entityType="LEAD" entityId={lead.id} defaultTo={lead.email} /> },
-        { value: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-4 h-4" />, content: <TasksTab entityType="LEAD" entityId={lead.id} /> },
+        { value: 'comments', label: 'Comments', icon: <MessageSquare className="w-4 h-4" />, content: <div className="p-4 text-gray-500 text-sm">Comments coming soon...</div> },
+        { value: 'data', label: 'Data', icon: <FileText className="w-4 h-4" />, content: <DataTab data={lead} /> },
+        { value: 'calls', label: 'Calls', icon: <Phone className="w-4 h-4" />, content: <CallsTab entityType="LEAD" entityId={lead.id} /> },
+        { value: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-4 h-4" />, content: <TasksTab entityType="LEAD" entityId={lead.id} entityName={`${lead.first_name} ${lead.last_name || ''}`} /> },
         { value: 'notes', label: 'Notes', icon: <FileText className="w-4 h-4" />, content: <NotesTab entityType="LEAD" entityId={lead.id} /> },
         { value: 'attachments', label: 'Attachments', icon: <Paperclip className="w-4 h-4" />, content: <AttachmentsTab entityType="LEAD" entityId={lead.id} /> },
-        { value: 'calls', label: 'Calls', icon: <Phone className="w-4 h-4" />, content: <CallsTab entityType="LEAD" entityId={lead.id} /> },
     ]
 
     return (
