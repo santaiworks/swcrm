@@ -19,15 +19,19 @@ import Link from "next/link"
 export type Lead = {
     id: string
     salutation: string
+    salutation_label?: string
     first_name: string
     last_name: string
     email: string
     status: string
     status_label?: string
     organization: string
+    industry_label?: string
+    source_label?: string
+    no_employees_label?: string
 }
 
-export const columns: ColumnDef<Lead>[] = [
+export const getColumns = (baseUrl: string = '/leads'): ColumnDef<Lead>[] => [
     {
         accessorKey: "name",
         header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>,
@@ -35,8 +39,8 @@ export const columns: ColumnDef<Lead>[] = [
             const lead = row.original
             return (
                 <div className="font-medium text-blue-900 hover:underline">
-                    <Link href={`/leads/${lead.id}`}>
-                        {lead.salutation} {lead.first_name} {lead.last_name}
+                    <Link href={`${baseUrl}/${lead.id}`}>
+                        {lead.salutation_label || lead.salutation} {lead.first_name} {lead.last_name}
                     </Link>
                 </div>
             )
@@ -89,7 +93,7 @@ export const columns: ColumnDef<Lead>[] = [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={`/leads/${lead.id}`}>View Details</Link>
+                            <Link href={`${baseUrl}/${lead.id}`}>View Details</Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

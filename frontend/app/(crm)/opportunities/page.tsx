@@ -37,6 +37,7 @@ export default async function OpportunitiesPage() {
                 title="Opportunities"
                 newLabel="New Opportunity"
                 dialogTitle="Opportunity"
+                baseUrl="/opportunities"
             />
 
         </div>

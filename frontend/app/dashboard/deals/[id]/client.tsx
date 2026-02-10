@@ -20,9 +20,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 interface DealDetailClientProps {
     deal: any
     activities: any[]
+    masterData: {
+        statuses: any[]
+        industries: any[]
+        sources: any[]
+        salutations: any[]
+        employeeCounts: any[]
+    }
 }
 
-export default function DealDetailClient({ deal, activities }: DealDetailClientProps) {
+export default function DealDetailClient({ deal, activities, masterData }: DealDetailClientProps) {
     const router = useRouter()
 
     const dealName = deal.first_name + (deal.last_name ? ` ${deal.last_name}` : '')
@@ -117,7 +124,17 @@ export default function DealDetailClient({ deal, activities }: DealDetailClientP
                                 placeholder="Rp 0"
                             />
                         },
-                        { label: 'Stage', value: <EditableSidebarItem label="Stage" value={deal.status} onSave={(val) => handleFieldUpdate('status', val)} /> },
+                        {
+                            label: 'Stage',
+                            value: <EditableSidebarItem
+                                label="Stage"
+                                value={deal.status}
+                                onSave={(val) => handleFieldUpdate('status', val)}
+                                type="select"
+                                options={masterData.statuses.map(s => ({ label: s.name, value: s.id }))}
+                                renderValue={() => deal.status_label || deal.status}
+                            />
+                        },
                         {
                             label: 'Closing Date',
                             value: <EditableSidebarItem
@@ -159,7 +176,7 @@ export default function DealDetailClient({ deal, activities }: DealDetailClientP
             title={dealName}
             status={
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 font-normal border-emerald-200">
-                    {deal.status}
+                    {deal.status_label || deal.status}
                 </Badge>
             }
             tabs={tabs}

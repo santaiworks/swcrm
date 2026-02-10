@@ -75,44 +75,51 @@ def seed_master_data():
             
     db.commit()
 
-def seed_organizations(count=100):
+def seed_organizations(count=500):
     print(f"Seeding {count} Organizations...")
     orgs = []
-    industries = [i.name for i in db.query(MasterIndustry).all()]
-    employee_counts = [e.name for e in db.query(MasterEmployeeCount).all()]
+    industries = db.query(MasterIndustry).all()
+    employee_counts = db.query(MasterEmployeeCount).all()
+    
+    start_date = datetime(2025, 11, 1)
     
     for _ in range(count):
         org = Organization(
             name=fake.company(),
             website=fake.url(),
-            industry=random.choice(industries) if industries else None,
-            no_employees=random.choice(employee_counts) if employee_counts else None,
+            industry=random.choice(industries).id if industries else None,
+            no_employees=random.choice(employee_counts).id if employee_counts else None,
             address=fake.street_address(),
             city=fake.city(),
             state=fake.state(),
             country=fake.country()
         )
+        org.created_at = fake.date_time_between(start_date=start_date, end_date='now')
         db.add(org)
         orgs.append(org)
     db.commit()
     return orgs
 
-def seed_leads(count=100):
+def seed_leads(count=500):
     print(f"Seeding {count} Leads (including Deals)...")
-    industries = [i.name for i in db.query(MasterIndustry).all()]
-    sources = [s.name for s in db.query(MasterSource).all()]
-    salutations = [s.name for s in db.query(MasterSalutation).all()]
-    statuses = [s.name for s in db.query(MasterLeadStatus).all()]
+    industries = db.query(MasterIndustry).all()
+    sources = db.query(MasterSource).all()
+    salutations = db.query(MasterSalutation).all()
+    statuses = db.query(MasterLeadStatus).all()
+    employee_counts = db.query(MasterEmployeeCount).all()
     
-    deal_statuses = ["Proposal", "Negotiation", "Closed Won", "Closed Lost"]
+    deal_status_names = ["Proposal", "Negotiation", "Closed Won", "Closed Lost"]
+    start_date = datetime(2025, 11, 1)
 
     leads = []
     for _ in range(count):
-        status = random.choice(statuses) if statuses else "New"
-        is_deal = status in deal_statuses
+        status_obj = random.choice(statuses) if statuses else None
+        is_deal = status_obj.name in deal_status_names if status_obj else False
+        
+        cdate = fake.date_time_between(start_date=start_date, end_date='now')
         
         lead = Lead(
-            salutation=random.choice(salutations) if salutations else None,
+            salutation=random.choice(salutations).id if salutations else None,
             first_name=fake.first_name(),
             last_name=fake.last_name(),
             job_title=fake.job(),
@@ -121,22 +128,25 @@ def seed_leads(count=100):
             mobile_no=fake.phone_number(),
             organization=fake.company(),
             website=fake.url(),
-            industry=random.choice(industries) if industries else None,
-            source=random.choice(sources) if sources else None,
-            status=status,
+            industry=random.choice(industries).id if industries else None,
+            no_employees=random.choice(employee_counts).id if employee_counts else None,
+            source=random.choice(sources).id if sources else None,
+            status=status_obj.id if status_obj else None,
             estimated_revenue=random.uniform(5000, 50000) if is_deal or random.random() > 0.7 else None,
             probability=random.randint(10, 90) if is_deal or random.random() > 0.7 else None,
             closing_date=fake.future_datetime(end_date="+90d") if is_deal else None
         )
-
+        lead.created_at = cdate
         db.add(lead)
         leads.append(lead)
     db.commit()
     return leads
 
-def seed_contacts(orgs, count=100):
+def seed_contacts(orgs, count=500):
     print(f"Seeding {count} Contacts...")
     contacts = []
+    start_date = datetime(2025, 11, 1)
+
     for _ in range(count):
         org = random.choice(orgs)
         contact = Contact(
@@ -148,65 +158,68 @@ def seed_contacts(orgs, count=100):
             organization=org.name,
             organization_id=org.id
         )
+        contact.created_at = fake.date_time_between(start_date=start_date, end_date='now')
         db.add(contact)
         contacts.append(contact)
     db.commit()
     return contacts
 
-def seed_interactions(entities, count=100):
+def seed_interactions(entities, count=500):
     # entities is a list of tuples (entity_type, entity_id)
-    print(f"Seeding {count} Interactions (Notes, Calls, Tasks, Emails)...")
+    print(f"Seeding {count} Interactions with Lifecycle Flow...")
     
-    for _ in range(count):
-        etype, eid = random.choice(entities)
+    from app.modules.master_data.models import MasterTaskStatus, MasterTaskPriority, MasterLeadStatus
+    task_statuses = db.query(MasterTaskStatus).all()
+    task_priorities = db.query(MasterTaskPriority).all()
+    lead_statuses = db.query(MasterLeadStatus).all()
+    ls_map = {s.name: s.id for s in lead_statuses}
+    
+    start_date = datetime(2025, 11, 1)
+
+    # To simulate flow, we pick some leads and give them multiple interactions
+    for etype, eid in entities:
+        if etype != "LEAD":
+            # Simple random interaction for others
+            cdate = fake.date_time_between(start_date=start_date, end_date='now')
+            db.add(Note(content=fake.paragraph(), entity_type=etype, entity_id=eid, created_at=cdate))
+            continue
+            
+        # For LEADS, simulate a flow
+        lead = db.query(Lead).filter(Lead.id == eid).first()
+        if not lead: continue
+
+        # Initial Call -> Contacted
+        if random.random() > 0.3:
+            cdate = fake.date_time_between(start_date=lead.created_at, end_date='now')
+            db.add(Call(subject="Initial Discovery Call", notes=fake.paragraph(), duration="5:30", status="Completed", call_type="Outgoing", entity_type=etype, entity_id=eid, created_at=cdate))
+            # Potentially update status to Contacted if it was New
+            contacted_id = ls_map.get("Contacted")
+            if contacted_id and lead.status == ls_map.get("New"):
+                lead.status = contacted_id
+                lead.updated_at = cdate
+            
+        # Follow up Task -> Qualified
+        if random.random() > 0.5:
+            # Task cdate should be after created_at
+            cdate = fake.date_time_between(start_date=lead.created_at, end_date='now')
+            db.add(Task(title="Follow up with prospect", description=fake.text(), priority_id=random.choice(task_priorities).id, status_id=random.choice(task_statuses).id, entity_type=etype, entity_id=eid, created_at=cdate))
+            qualified_id = ls_map.get("Qualified")
+            if qualified_id and random.random() > 0.5:
+                lead.status = qualified_id
+                lead.updated_at = cdate
         
-        # Seed Note
-        db.add(Note(
-            content=fake.paragraph(),
-            entity_type=etype,
-            entity_id=eid
-        ))
-        
-        # Seed Task
-        db.add(Task(
-            title=fake.sentence(),
-            description=fake.text(),
-            due_date=fake.future_datetime(end_date="+30d"),
-            priority=random.choice(["Low", "Medium", "High"]),
-            status=random.choice(["Pending", "In Progress", "Completed"]),
-            entity_type=etype,
-            entity_id=eid
-        ))
-        
-        # Seed Call
-        db.add(Call(
-            subject=fake.sentence(),
-            notes=fake.paragraph(),
-            duration=f"{random.randint(1, 15)}:{random.randint(0, 59):02d}",
-            duration_seconds=random.randint(60, 900),
-            status=random.choice(["Completed", "Planned", "Missed"]),
-            call_type=random.choice(["Incoming", "Outgoing"]),
-            entity_type=etype,
-            entity_id=eid
-        ))
-        
-        # Seed Email
-        db.add(EmailLog(
-            to=fake.email(),
-            subject=fake.sentence(),
-            body=fake.text(),
-            status="Sent",
-            entity_type=etype,
-            entity_id=eid
-        ))
-        
-        # Seed Activity
-        db.add(Activity(
-            action_type=random.choice(["CREATE", "UPDATE", "NOTE_ADDED", "TASK_CREATED"]),
-            entity_type=etype,
-            entity_id=str(eid),
-            description=fake.sentence()
-        ) )
+        # If it's a Won deal, make sure closing_date and updated_at are set
+        won_id = ls_map.get("Closed Won")
+        if lead.status == won_id:
+             # Ensure updated_at is some time after created_at
+             lead.updated_at = fake.date_time_between(start_date=lead.created_at, end_date='now')
+             if not lead.closing_date:
+                 lead.closing_date = lead.updated_at
+
+        # Email logs
+        for _ in range(random.randint(1, 3)):
+            cdate = fake.date_time_between(start_date=lead.created_at, end_date='now')
+            db.add(EmailLog(to=fake.email(), subject=fake.sentence(), body=fake.text(), status="Sent", entity_type=etype, entity_id=eid, sent_at=cdate))
 
     db.commit()
 
@@ -271,9 +284,9 @@ def main():
         
         seed_master_data()
         seed_users(10)
-        orgs = seed_organizations(100)
-        contacts = seed_contacts(orgs, 100)
-        leads = seed_leads(100)
+        orgs = seed_organizations(500)
+        contacts = seed_contacts(orgs, 500)
+        leads = seed_leads(500)
         
         # Combine all entities for interactive seeding
         entities = []
@@ -281,7 +294,7 @@ def main():
         entities.extend([("CONTACT", c.id) for c in contacts])
         entities.extend([("LEAD", lead.id) for lead in leads])
         
-        seed_interactions(entities, 100)
+        seed_interactions(entities, 500)
         
         print("\nSeeding completed successfully!")
     except Exception as e:

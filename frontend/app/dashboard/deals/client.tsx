@@ -5,18 +5,20 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CreateDealDialog } from '@/components/deals/create-deal-dialog'
 import { DataTable } from '@/components/ui/data-table'
-import { columns } from '@/components/deals/columns'
+import { getColumns } from '@/components/deals/columns'
 
 interface DealsClientProps {
     deals: any[]
+    baseUrl?: string
     statusOptions?: {
         label: string
         value: string
     }[]
 }
 
-export default function DealsClient({ deals, statusOptions = [] }: DealsClientProps) {
+export default function DealsClient({ deals, baseUrl = "/deals", statusOptions = [] }: DealsClientProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const columns = getColumns(baseUrl)
 
     return (
         <div className="flex flex-col h-full space-y-6">

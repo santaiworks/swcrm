@@ -10,8 +10,19 @@ def migrate():
         conn.execution_options(isolation_level="AUTOCOMMIT")
         print("Dropping legacy tables...")
         # Drop dependent tables first
+        conn.execute(text("DROP TABLE IF EXISTS activities CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS notes CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS calls CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS emails CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS attachments CASCADE;"))
         conn.execute(text("DROP TABLE IF EXISTS tasks CASCADE;"))
         conn.execute(text("DROP TABLE IF EXISTS leads CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS contacts CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS organizations CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS employees CASCADE;"))
+        conn.execute(text("DROP TABLE IF EXISTS users CASCADE;"))
+        
+        # Drop master data tables
         conn.execute(text("DROP TABLE IF EXISTS master_task_status CASCADE;"))
         conn.execute(text("DROP TABLE IF EXISTS master_task_priority CASCADE;"))
         conn.execute(text("DROP TABLE IF EXISTS master_industries CASCADE;"))

@@ -23,8 +23,10 @@ export type Deal = {
     id: string
     first_name: string
     last_name: string | null
+    salutation_label?: string
     estimated_revenue: number | null
     status: string
+    status_label?: string
     closing_date: string | null
     organization: string | null
 }
@@ -39,7 +41,7 @@ const handleDelete = async (id: string) => {
     }
 }
 
-export const columns: ColumnDef<Deal>[] = [
+export const getColumns = (baseUrl: string = '/deals'): ColumnDef<Deal>[] => [
     {
         accessorKey: "name",
         header: ({ column }) => <SortableHeader column={column}>Deal Name</SortableHeader>,
@@ -49,7 +51,7 @@ export const columns: ColumnDef<Deal>[] = [
             const name = deal.first_name + (deal.last_name ? ` ${deal.last_name}` : '')
             return (
                 <div className="font-medium text-blue-900 hover:underline">
-                    <Link href={`/deals/${deal.id}`}>{name}</Link>
+                    <Link href={`${baseUrl}/${deal.id}`}>{name}</Link>
                 </div>
             )
         },
@@ -68,13 +70,14 @@ export const columns: ColumnDef<Deal>[] = [
         },
     },
     {
-        accessorKey: "status",
+        accessorKey: "status_label",
         header: ({ column }) => <SortableHeader column={column}>Stage</SortableHeader>,
         cell: ({ row }) => {
-            const status = row.getValue("status") as string
+            const statusLabel = row.original.status_label
+            const status = row.getValue("status_label") as string
             return (
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                    {status}
+                    {statusLabel || status}
                 </Badge>
             )
         },
@@ -109,7 +112,7 @@ export const columns: ColumnDef<Deal>[] = [
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={`/deals/${deal.id}`}>View Details</Link>
+                            <Link href={`${baseUrl}/${deal.id}`}>View Details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(deal.id)} className="text-red-600">
                             Delete

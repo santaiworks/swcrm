@@ -143,7 +143,9 @@ export function SidebarNav({ className, user, collapsible = false, ...props }: S
 
                 <div className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar mt-2">
                     {items.map((item) => {
-                        const isActive = pathname === item.href
+                        const isActive = item.href === '/dashboard'
+                            ? pathname === item.href
+                            : pathname?.startsWith(item.href)
                         return (
                             isCollapsed ? (
                                 <Tooltip key={item.href} delayDuration={0}>

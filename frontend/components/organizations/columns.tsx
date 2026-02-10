@@ -19,7 +19,9 @@ export type Organization = {
     name: string
     website?: string
     industry?: string
+    industry_label?: string
     no_employees?: string
+    no_employees_label?: string
     city?: string
     country?: string
     created_at: string
@@ -50,11 +52,11 @@ export const columns: ColumnDef<Organization>[] = [
         }
     },
     {
-        accessorKey: 'industry',
+        accessorKey: 'industry_label',
         header: 'Industry',
     },
     {
-        accessorKey: 'no_employees',
+        accessorKey: 'no_employees_label',
         header: 'Employees',
     },
     {

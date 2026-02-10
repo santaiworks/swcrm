@@ -46,16 +46,28 @@ class Lead(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    status_rel = relationship(
-        "MasterLeadStatus",
-        primaryjoin="Lead.status == MasterLeadStatus.id",
-        uselist=False,
-        viewonly=True,
-        lazy="joined"
-    )
+    status_rel = relationship("MasterLeadStatus", lazy="joined")
+    salutation_rel = relationship("MasterSalutation", lazy="joined")
+    industry_rel = relationship("MasterIndustry", lazy="joined")
+    no_employees_rel = relationship("MasterEmployeeCount", lazy="joined")
+    source_rel = relationship("MasterSource", lazy="joined")
 
     @property
     def status_label(self):
-        if self.status_rel:
-            return self.status_rel.name
-        return str(self.status)
+        return self.status_rel.name if self.status_rel else None
+
+    @property
+    def salutation_label(self):
+        return self.salutation_rel.name if self.salutation_rel else None
+
+    @property
+    def industry_label(self):
+        return self.industry_rel.name if self.industry_rel else None
+
+    @property
+    def no_employees_label(self):
+        return self.no_employees_rel.name if self.no_employees_rel else None
+
+    @property
+    def source_label(self):
+        return self.source_rel.name if self.source_rel else None

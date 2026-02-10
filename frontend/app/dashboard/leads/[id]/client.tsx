@@ -5,7 +5,7 @@ import { MoreHorizontal, ArrowRightLeft, Plus, Mail, Link as LinkIcon, Paperclip
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { updateLeadStatus, deleteLead, updateLead } from '../actions'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { UpdateLeadDialog } from '@/components/leads/update-lead-dialog'
 import { ConvertDealDialog } from '@/components/leads/convert-deal-dialog'
 import { DetailPageLayout } from '@/components/common/detail-page-layout'
@@ -26,13 +26,21 @@ import { DataTab } from '@/components/common/data-tab'
 interface LeadDetailClientProps {
     lead: any
     activities: any[]
+    masterData: {
+        statuses: any[]
+        industries: any[]
+        sources: any[]
+        salutations: any[]
+        employeeCounts: any[]
+    }
 }
 
-export default function LeadDetailClient({ lead, activities }: LeadDetailClientProps) {
+export default function LeadDetailClient({ lead, activities, masterData }: LeadDetailClientProps) {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isConvertOpen, setIsConvertOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
     const router = useRouter()
+    const pathname = usePathname()
 
     useEffect(() => {
         setMounted(true)
@@ -116,7 +124,7 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
 
     const sidebar = (
         <DetailSidebar
-            title={`${lead.salutation ? lead.salutation + ' ' : ''}${lead.first_name} ${lead.last_name || ''}`}
+            title={`${lead.salutation_label ? lead.salutation_label + ' ' : ''}${lead.first_name} ${lead.last_name || ''}`}
             subtitle={
                 <Avatar className="h-12 w-12 bg-gray-100">
                     <AvatarFallback className="text-gray-500 text-lg">
@@ -153,9 +161,29 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
                                 renderValue={(val) => val ? <a href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{val}</a> : null}
                             />
                         },
-                        { label: 'Industry', value: <EditableSidebarItem label="Industry" value={lead.industry} onSave={(val) => handleFieldUpdate('industry', val)} /> },
+                        {
+                            label: 'Industry',
+                            value: <EditableSidebarItem
+                                label="Industry"
+                                value={lead.industry}
+                                onSave={(val) => handleFieldUpdate('industry', val)}
+                                type="select"
+                                options={masterData.industries.map(i => ({ label: i.name, value: i.id }))}
+                                renderValue={() => lead.industry_label || lead.industry || 'None'}
+                            />
+                        },
                         { label: 'Job title', value: <EditableSidebarItem label="Job title" value={lead.job_title} onSave={(val) => handleFieldUpdate('job_title', val)} /> },
-                        { label: 'Source', value: <EditableSidebarItem label="Source" value={lead.source} onSave={(val) => handleFieldUpdate('source', val)} /> },
+                        {
+                            label: 'Source',
+                            value: <EditableSidebarItem
+                                label="Source"
+                                value={lead.source}
+                                onSave={(val) => handleFieldUpdate('source', val)}
+                                type="select"
+                                options={masterData.sources.map(s => ({ label: s.name, value: s.id }))}
+                                renderValue={() => lead.source_label || lead.source || 'None'}
+                            />
+                        },
                         {
                             label: 'Perkiraan Omzet',
                             value: <EditableSidebarItem
@@ -178,6 +206,17 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
                                 placeholder="0%"
                             />
                         },
+                        {
+                            label: 'Closing Date',
+                            value: <EditableSidebarItem
+                                label="Closing Date"
+                                value={lead.closing_date ? format(new Date(lead.closing_date), 'yyyy-MM-dd') : ''}
+                                onSave={(val) => handleFieldUpdate('closing_date', val)}
+                                type="date"
+                                renderValue={(val) => val ? format(new Date(val), 'MMM d, yyyy') : 'No date'}
+                                placeholder="Pick a date"
+                            />
+                        },
                         { label: 'Lead owner', value: lead.lead_owner || 'Unassigned' }, // Or map generic ID to name
 
                     ]
@@ -185,7 +224,17 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
                 {
                     title: 'Person',
                     items: [
-                        { label: 'Salutation', value: <EditableSidebarItem label="Salutation" value={lead.salutation} onSave={(val) => handleFieldUpdate('salutation', val)} /> },
+                        {
+                            label: 'Salutation',
+                            value: <EditableSidebarItem
+                                label="Salutation"
+                                value={lead.salutation}
+                                onSave={(val) => handleFieldUpdate('salutation', val)}
+                                type="select"
+                                options={masterData.salutations.map(s => ({ label: s.name, value: s.id }))}
+                                renderValue={() => lead.salutation_label || lead.salutation || 'None'}
+                            />
+                        },
                         { label: 'First name', value: <EditableSidebarItem label="First name" value={lead.first_name} onSave={(val) => handleFieldUpdate('first_name', val)} /> },
                         { label: 'Last name', value: <EditableSidebarItem label="Last name" value={lead.last_name} onSave={(val) => handleFieldUpdate('last_name', val)} /> },
                         { label: 'Email', value: <EditableSidebarItem label="Email" value={lead.email} onSave={(val) => handleFieldUpdate('email', val)} type="email" /> },
@@ -207,14 +256,30 @@ export default function LeadDetailClient({ lead, activities }: LeadDetailClientP
         { value: 'attachments', label: 'Attachments', icon: <Paperclip className="w-4 h-4" />, content: <AttachmentsTab entityType="LEAD" entityId={lead.id} /> },
     ]
 
+
+
+    let entityType = 'Lead'
+    let entityPrefix = 'LEAD'
+    let entityHref = '/leads'
+
+    if (pathname?.startsWith('/opportunities')) {
+        entityType = 'Opportunity'
+        entityPrefix = 'OPP'
+        entityHref = '/opportunities'
+    } else if (pathname?.startsWith('/deals')) {
+        entityType = 'Deal'
+        entityPrefix = 'DEAL'
+        entityHref = '/deals'
+    }
+
     return (
         <>
             <DetailPageLayout
                 breadcrumbs={[
-                    { label: 'Leads', href: '/leads' },
+                    { label: `${entityType}s`, href: entityHref },
                     { label: `${lead.first_name} ${lead.last_name || ''}` }
                 ]}
-                title={lead.reference_id || `LEAD-${lead.id.substring(0, 8).toUpperCase()}`} // Using ref ID if exists
+                title={lead.reference_id || `${entityPrefix}-${lead.id.substring(0, 8).toUpperCase()}`}
                 status={
                     <div className="flex items-center gap-2">
                         <MasterDataCombobox

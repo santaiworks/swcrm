@@ -20,23 +20,10 @@ export default async function DealsPage() {
 
   const [deals, statuses] = await Promise.all([dealsData, statusesData])
 
-  // Map status ID to Name in deals for display
-  const enrichedDeals = (deals || []).map((deal: any) => {
-    // If status is a number (ID), find the name
-    if (typeof deal.status === 'number') {
-        const statusObj = (statuses || []).find((s: any) => s.id === deal.status)
-        return {
-            ...deal,
-            status: statusObj ? statusObj.name : deal.status
-        }
-    }
-    return deal
-  })
-
   const statusOptions = (statuses || []).map((s: any) => ({
     label: s.name,
     value: s.name,
   }))
 
-  return <DealsClient deals={enrichedDeals} statusOptions={statusOptions} />
+  return <DealsClient deals={deals} statusOptions={statusOptions} baseUrl="/deals" />
 }

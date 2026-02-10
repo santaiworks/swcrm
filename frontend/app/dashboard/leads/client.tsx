@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { CreateLeadDialog } from '@/components/leads/create-lead-dialog'
 import { LeadSummaryCards } from '@/components/leads/lead-summary-cards'
 import { DataTable } from '@/components/ui/data-table'
-import { columns } from '@/components/leads/columns'
+
+import { getColumns } from '@/components/leads/columns'
 
 interface LeadsClientProps {
     leads: any[]
+    baseUrl?: string
     statusOptions?: {
         label: string
         value: string
@@ -22,6 +24,7 @@ interface LeadsClientProps {
 
 export default function LeadsClient({
     leads,
+    baseUrl = "/leads",
     statusOptions = [],
     summaryTitle,
     title = "Leads",
@@ -29,6 +32,7 @@ export default function LeadsClient({
     dialogTitle = "Lead"
 }: LeadsClientProps) {
     const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const columns = getColumns(baseUrl)
 
     const filterableColumns = [
         {

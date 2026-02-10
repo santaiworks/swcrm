@@ -1,5 +1,6 @@
 import { apiFetch } from '@/lib/api'
 import LeadDetailClient from '@/app/dashboard/leads/[id]/client'
+import { searchMasterData } from '@/app/dashboard/leads/master-actions'
 import { notFound } from 'next/navigation'
 
 async function getLead(id: string) {
@@ -16,14 +17,27 @@ async function getActivities(id: string) {
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
   const { id } = await params
-  const [lead, activities] = await Promise.all([
+  const [lead, activities, statuses, industries, sources, salutations, employeeCounts] = await Promise.all([
     getLead(id),
-    getActivities(id)
+    getActivities(id),
+    searchMasterData('master_lead_status', ''),
+    searchMasterData('master_industries', ''),
+    searchMasterData('master_sources', ''),
+    searchMasterData('master_salutations', ''),
+    searchMasterData('master_employee_counts', ''),
   ])
 
   if (!lead || lead.error) {
     notFound()
   }
 
-  return <LeadDetailClient lead={lead} activities={activities} />
+  const masterData = {
+    statuses: statuses || [],
+    industries: industries || [],
+    sources: sources || [],
+    salutations: salutations || [],
+    employeeCounts: employeeCounts || []
+  }
+
+  return <LeadDetailClient lead={lead} activities={activities} masterData={masterData} />
 }

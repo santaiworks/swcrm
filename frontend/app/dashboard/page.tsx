@@ -4,8 +4,10 @@ import { apiFetch } from '@/lib/api'
 
 interface Lead {
   id: string
-  status: number | string // Support ID (number) or legacy Name (string)
+  status: number | string
+  status_label?: string
   source?: number | string
+  source_label?: string
   estimated_revenue?: number
   created_at?: string
   updated_at?: string
@@ -34,25 +36,25 @@ export default async function DashboardPage() {
 
   // Helper to check status (handle both ID and Name for backward compatibility)
   const isStatusIn = (leadStatus: number | string, targetNames: string[], targetIds: number[]) => {
-      if (typeof leadStatus === 'number') return targetIds.includes(leadStatus)
-      // Check if it's a numeric string (e.g. "4") matching an ID
-      if (!isNaN(Number(leadStatus)) && targetIds.includes(Number(leadStatus))) return true
-      return targetNames.includes(leadStatus as string)
+    if (typeof leadStatus === 'number') return targetIds.includes(leadStatus)
+    // Check if it's a numeric string (e.g. "4") matching an ID
+    if (!isNaN(Number(leadStatus)) && targetIds.includes(Number(leadStatus))) return true
+    return targetNames.includes(leadStatus as string)
   }
 
   const isStatus = (leadStatus: number | string, targetName: string, targetId?: number) => {
-      if (typeof leadStatus === 'number') return leadStatus === targetId
-      if (!isNaN(Number(leadStatus)) && Number(leadStatus) === targetId) return true
-      return leadStatus === targetName
+    if (typeof leadStatus === 'number') return leadStatus === targetId
+    if (!isNaN(Number(leadStatus)) && Number(leadStatus) === targetId) return true
+    return leadStatus === targetName
   }
 
   const leadsOnly = allLeads.filter((l) => !isStatusIn(l.status, dealStatusNames, dealStatusIds))
   const dealsOnly = allLeads.filter((l) => isStatusIn(l.status, dealStatusNames, dealStatusIds))
   const wonDealsList = dealsOnly.filter((l) => isStatus(l.status, wonStatusName, wonStatusId))
   const ongoingDealsList = dealsOnly.filter((l) => {
-      const ongoingNames = ['Proposal', 'Negotiation']
-      const ongoingIds = statuses.filter(s => ongoingNames.includes(s.name)).map(s => s.id)
-      return isStatusIn(l.status, ongoingNames, ongoingIds)
+    const ongoingNames = ['Proposal', 'Negotiation']
+    const ongoingIds = statuses.filter(s => ongoingNames.includes(s.name)).map(s => s.id)
+    return isStatusIn(l.status, ongoingNames, ongoingIds)
   })
 
   const totalLeads = leadsOnly.length
@@ -67,7 +69,7 @@ export default async function DashboardPage() {
   const qualifiedNames = ['Qualified', ...dealStatusNames]
   const qualifiedIds = statuses.filter(s => qualifiedNames.includes(s.name)).map(s => s.id)
   const convertedLeads = allLeads.filter((l) => isStatusIn(l.status, qualifiedNames, qualifiedIds))
-  
+
   let totalLeadTime = 0
   let countLeadTime = 0
   for (const lead of convertedLeads) {
@@ -104,17 +106,19 @@ export default async function DashboardPage() {
   // Funnel: New -> Qualified -> Proposal -> Negotiation -> Won
   // Map IDs to Names for counting
   const statusIdToName = (id: number) => statuses.find(s => s.id === id)?.name || 'Unknown'
-  
+
   function countByStatusNormalized(items: Lead[]): Record<string, number> {
     const map: Record<string, number> = {}
     for (const it of items || []) {
       let key = 'Unknown'
-      if (typeof it.status === 'number') {
-          key = statusIdToName(it.status)
+      if (it.status_label) {
+        key = it.status_label
+      } else if (typeof it.status === 'number') {
+        key = statusIdToName(it.status)
       } else if (!isNaN(Number(it.status))) {
-          key = statusIdToName(Number(it.status))
+        key = statusIdToName(Number(it.status))
       } else {
-          key = it.status as string || 'Unknown'
+        key = it.status as string || 'Unknown'
       }
       map[key] = (map[key] || 0) + 1
     }
@@ -141,7 +145,7 @@ export default async function DashboardPage() {
   const leadsBySource: PieItem[] = pieFromFieldWithMap(allLeads, 'source', sources)
 
   // ... (trend remains same, but countByDate logic needs checking if it uses status? No, it uses created_at)
-  
+
   // ...
 
 
@@ -200,11 +204,15 @@ function pieFromFieldWithMap(items: Lead[], field: string, mapping: MasterStatus
   const map: Record<string, number> = {}
   for (const it of items || []) {
     let key = 'Unknown'
+    const labelKey = `${field}_label`
     const val = it?.[field]
-    if (typeof val === 'number') {
-        key = mapping.find(m => m.id === val)?.name || 'Unknown'
+
+    if (it?.[labelKey]) {
+      key = it[labelKey] as string
+    } else if (typeof val === 'number') {
+      key = mapping.find(m => m.id === val)?.name || 'Unknown'
     } else {
-        key = (val as string) || 'Unknown'
+      key = (val as string) || 'Unknown'
     }
     map[key] = (map[key] || 0) + 1
   }

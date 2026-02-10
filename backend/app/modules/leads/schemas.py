@@ -33,6 +33,10 @@ class LeadResponse(LeadCreate):
     id: uuid.UUID
     created_at: Any
     status_label: Optional[str] = None
+    salutation_label: Optional[str] = None
+    industry_label: Optional[str] = None
+    no_employees_label: Optional[str] = None
+    source_label: Optional[str] = None
     
     class Config:
         from_attributes = True

@@ -26,5 +26,5 @@ export default async function LeadsPage() {
     value: s.name,
   }))
 
-  return <LeadsClient leads={leads} statusOptions={statusOptions} />
+  return <LeadsClient leads={leads} statusOptions={statusOptions} baseUrl="/leads" />
 }
