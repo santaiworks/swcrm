@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SantaiWorks CRM
 
-## Getting Started
+A modern CRM platform built with Next.js (Frontend) and FastAPI/Python (Backend).
 
-First, run the development server:
+## 🚀 Project Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+SantaiWorks CRM is designed to streamline lead management, deal tracking, and organizational interactions. It features a robust dashboard, consolidated lead views, and comprehensive activity logging.
+
+## 📁 Repository Structure
+
+```text
+santaiworks-crm/
+├── backend/          # FastAPI application (Python)
+├── frontend/         # Next.js application (React/TypeScript)
+├── docker-compose.yml # Container orchestration
+└── uploads/          # Shared directory for file attachments
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Backend Setup
+The backend handles the logic, API, and database interactions.
 
-## Learn More
+- **Navigate to directory:** `cd backend`
+- **Install dependencies:** `pip install -r requirements.txt`
+- **Required ENV:** Configure `.env` with your PostgreSQL credentials.
+- **Run the server:** `uvicorn main:app --reload`
+- **API Documentation:** Visit `http://localhost:8000/docs`
 
-To learn more about Next.js, take a look at the following resources:
+#### Database Maintenance & Seeding
+- **Fresh Reset:** `python reset_db.py` (Drops and recreates all tables)
+- **Seed Master Data:** `python seed_all_master.py` (Populates statuses, industries, etc.)
+- **Seed Test Data:** `python seed_dummy_data.py` (Populates 500+ records for testing)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Frontend Setup
+The frontend is built with Next.js 16 and Tailwind CSS.
 
-## Deploy on Vercel
+- **Navigate to directory:** `cd frontend`
+- **Install dependencies:** `npm install`
+- **Required ENV:** Configure `.env.local` to point to the backend URL.
+- **Run the server:** `npm run dev`
+- **Access App:** Visit `http://localhost:3000`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ Tech Stack
+
+### Backend
+- **Framework:** [FastAPI](https://fastapi.tiangolo.com/)
+- **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/)
+- **Database:** PostgreSQL
+- **Language:** Python 3.12+
+
+### Frontend
+- **Framework:** [Next.js 16](https://nextjs.org/)
+- **Styling:** Tailwind CSS
+- **Components:** Radix UI / Shadcn UI
+- **Data Table:** TanStack Table
+- **Charts:** Recharts
+
+---
+
+## 📄 License
+Privately developed for SantaiWorks.
