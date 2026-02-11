@@ -136,6 +136,11 @@ export function EditableSidebarItem({
                     type={type}
                     autoFocus
                 />
+                {isLoading && (
+                    <div className="flex-shrink-0 ml-1">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                    </div>
+                )}
             </div>
         )
     }

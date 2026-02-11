@@ -18,7 +18,7 @@ function SidebarSection({ title, children, defaultOpen = true, icon }: SidebarSe
     const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
     return (
-        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-1">
             <div className="flex items-center justify-between w-full">
                 <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="w-full justify-start p-0 hover:bg-transparent font-semibold text-gray-900">
@@ -29,7 +29,7 @@ function SidebarSection({ title, children, defaultOpen = true, icon }: SidebarSe
                 </CollapsibleTrigger>
                 {/* Optional: Add edit action here if needed */}
             </div>
-            <CollapsibleContent className="space-y-2 pt-1 pb-2 pl-4">
+            <CollapsibleContent className="space-y-1.5 pt-0.5 pb-1 pl-4">
                 {children}
             </CollapsibleContent>
         </Collapsible>
@@ -52,7 +52,7 @@ interface DetailSidebarProps {
 
 export function DetailSidebar({ title, subtitle, actionIcons, sections }: DetailSidebarProps) {
     return (
-        <div className="w-full space-y-3">
+        <div className="w-full space-y-2.5">
             {/* Profile / Header Card */}
             <div className="flex flex-col gap-3">
                 <div className="flex items-start gap-3">
@@ -71,13 +71,13 @@ export function DetailSidebar({ title, subtitle, actionIcons, sections }: Detail
             <div className="h-px bg-gray-100" />
 
             {/* Sections */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
                 {sections.map((section, idx) => (
                     <div key={idx}>
                         <SidebarSection title={section.title} icon={section.icon}>
                             <div className="grid grid-cols-1 gap-1.5 text-sm">
                                 {section.items.map((item, itemIdx) => (
-                                    <div key={itemIdx} className="grid grid-cols-[90px_1fr] gap-2 items-start">
+                                    <div key={itemIdx} className="grid grid-cols-[90px_1fr] gap-x-2 gap-y-0.5 items-start">
                                         <span className="text-gray-500 text-xs mt-0.5">{item.label}</span>
                                         <div className="text-gray-900 font-medium break-words text-sm">
                                             {item.value || <span className="text-gray-300 italic">Empty</span>}

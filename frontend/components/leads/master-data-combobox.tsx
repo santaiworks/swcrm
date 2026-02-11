@@ -36,6 +36,7 @@ interface MasterDataComboboxProps {
     name?: string
     placeholder?: string
     disabled?: boolean
+    isLoading?: boolean
 }
 
 export function MasterDataCombobox({
@@ -44,7 +45,8 @@ export function MasterDataCombobox({
     onChange,
     name,
     placeholder = 'Select...',
-    disabled = false
+    disabled = false,
+    isLoading = false
 }: MasterDataComboboxProps) {
     const [open, setOpen] = React.useState(false)
     const [query, setQuery] = React.useState('')
@@ -106,12 +108,16 @@ export function MasterDataCombobox({
                     role="combobox"
                     aria-expanded={open}
                     className="w-full justify-between bg-gray-50/50 border-gray-200 h-8 text-sm font-normal text-muted-foreground hover:bg-gray-50/50"
-                    disabled={disabled}
+                    disabled={disabled || isLoading}
                 >
                     <span className={cn("truncate", displayValue ? "text-foreground" : "text-muted-foreground")}>
-                        {displayValue || placeholder}
+                        {isLoading ? "Updating..." : (displayValue || placeholder)}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    {isLoading ? (
+                        <div className="ml-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                    ) : (
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    )}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">

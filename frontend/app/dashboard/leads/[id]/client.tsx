@@ -38,13 +38,20 @@ interface LeadDetailClientProps {
 export default function LeadDetailClient({ lead, activities, masterData }: LeadDetailClientProps) {
     const [isEditOpen, setIsEditOpen] = useState(false)
     const [isConvertOpen, setIsConvertOpen] = useState(false)
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const [currentActivities, setCurrentActivities] = useState(activities)
     const router = useRouter()
     const pathname = usePathname()
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    // Update local activities if prop changes
+    useEffect(() => {
+        setCurrentActivities(activities)
+    }, [activities])
 
     if (!mounted) return null
 
@@ -75,10 +82,10 @@ export default function LeadDetailClient({ lead, activities, masterData }: LeadD
             </div>
 
             <div className="space-y-8 relative pl-4 after:absolute after:inset-y-0 after:left-0 after:w-px after:bg-gray-200">
-                {activities.length === 0 ? (
+                {currentActivities.length === 0 ? (
                     <div className="text-gray-500 text-sm py-8 pl-6">No activity history yet.</div>
                 ) : (
-                    activities.map((activity) => (
+                    currentActivities.map((activity) => (
                         <div key={activity.id} className="relative pl-8">
                             {/* Timeline Node */}
                             <div className="absolute left-[-5px] top-1 h-2.5 w-2.5 rounded-full bg-white border-2 border-gray-400 z-10" />
@@ -95,7 +102,7 @@ export default function LeadDetailClient({ lead, activities, masterData }: LeadD
                         </div>
                     ))
                 )}
-                {/* Fake initial activity for visuals if needed, or rely on real data */}
+                {/* Initial activity */}
                 <div className="relative pl-8">
                     <div className="absolute left-[-5px] top-1 h-2.5 w-2.5 rounded-full bg-white border-2 border-gray-400 z-10" />
                     <div className="flex flex-col gap-1">
@@ -285,13 +292,18 @@ export default function LeadDetailClient({ lead, activities, masterData }: LeadD
                         <MasterDataCombobox
                             table="master_lead_status"
                             value={lead.status}
+                            isLoading={isUpdatingStatus}
                             onChange={async (val) => {
-                                const res = await updateLeadStatus(lead.id, val || lead.status)
+                                setIsUpdatingStatus(true)
+                                const res = await updateLeadStatus(lead.id, val.toString() || lead.status)
                                 if (res.success) {
                                     toast.success('Status updated')
+                                    // revalidatePath handles partial update, but we might want to refresh client-side if needed
+                                    // router.refresh() // revalidatePath should handle this
                                 } else {
                                     toast.error(res.error || 'Failed to update status')
                                 }
+                                setIsUpdatingStatus(false)
                             }}
                             placeholder="Status"
                         />

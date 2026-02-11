@@ -13,13 +13,13 @@ interface DataSectionProps {
 
 function DataSection({ title, isOpen = true, children }: DataSectionProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-2">
             <div className="flex items-center gap-2 cursor-pointer group">
                 <h3 className="text-base font-semibold text-gray-900">{title}</h3>
                 <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
             </div>
             {isOpen && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                     {children}
                 </div>
             )}
@@ -35,11 +35,11 @@ interface DataFieldProps {
 
 function DataField({ label, value, required }: DataFieldProps) {
     return (
-        <div className="space-y-1.5">
+        <div className="space-y-0.5">
             <label className="text-xs font-medium text-gray-400">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
-            <div className="bg-gray-50/50 border border-transparent rounded-lg px-3 py-2.5 text-sm text-gray-900 min-h-[42px] flex items-center">
+            <div className="bg-gray-50/50 border border-transparent rounded-lg px-3 py-1 text-sm text-gray-900 min-h-[34px] flex items-center">
                 {value || <span className="text-gray-300 italic">None</span>}
             </div>
         </div>
@@ -52,7 +52,7 @@ interface DataTabProps {
 
 export function DataTab({ data }: DataTabProps) {
     return (
-        <div className="space-y-12 pb-12">
+        <div className="space-y-6 pb-6">
             <DataSection title="Details">
                 <DataField
                     label="Organization"

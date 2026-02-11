@@ -82,11 +82,23 @@ class LeadService:
         if not db_lead:
             return None
         
+        old_status = db_lead.status
+        
         for key, value in lead_data.items():
             setattr(db_lead, key, value)
         
+        new_status = db_lead.status
         db.commit()
         db.refresh(db_lead)
+        
+        # Determine descriptive log
+        description = f"Lead {db_lead.first_name} details updated."
+        if old_status != new_status:
+            old_status_obj = db.query(MasterLeadStatus).filter(MasterLeadStatus.id == old_status).first()
+            new_status_obj = db.query(MasterLeadStatus).filter(MasterLeadStatus.id == new_status).first()
+            old_name = old_status_obj.name if old_status_obj else str(old_status)
+            new_name = new_status_obj.name if new_status_obj else str(new_status)
+            description = f"Status changed from {old_name} to {new_name}."
         
         # Log Activity
         ActivityService.log_activity(
@@ -94,7 +106,7 @@ class LeadService:
             action_type="UPDATE",
             entity_type="LEAD",
             entity_id=str(db_lead.id),
-            description=f"Lead {db_lead.first_name} details updated.",
+            description=description,
             user_id=user_id
         )
         
@@ -141,6 +153,12 @@ class LeadService:
                  final_status_id = status_obj.id
         
         if final_status_id is not None:
+            # Get names for descriptive logging
+            old_status_obj = db.query(MasterLeadStatus).filter(MasterLeadStatus.id == old_status).first()
+            new_status_obj = db.query(MasterLeadStatus).filter(MasterLeadStatus.id == final_status_id).first()
+            old_name = old_status_obj.name if old_status_obj else str(old_status)
+            new_name = new_status_obj.name if new_status_obj else str(final_status_id)
+
             lead.status = final_status_id
             db.commit()
             
@@ -150,7 +168,7 @@ class LeadService:
                 action_type="UPDATE",
                 entity_type="LEAD",
                 entity_id=str(lead.id),
-                description=f"Lead status changed from {old_status} to {lead.status}.",
+                description=f"Status changed from {old_name} to {new_name}.",
                 user_id=user_id
             )
             
